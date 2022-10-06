@@ -3,10 +3,9 @@ import os
 
 # defining the paths 
 
-BASE_PATH = '../data/ucf_action/Running/001'
-BASE_PATH_IMG = '../data/ucf_action/Running'
-IMAGE_PATH = os.path.sep.join([BASE_PATH_IMG,'001'])
-ANNOTS_PATH = os.path.sep.join([BASE_PATH, "Running.csv"])
+BASE_PATH = '../data/ucf_action'
+IMAGE_PATH = os.path.sep.join([BASE_PATH,'images'])
+ANNOTS_PATH = os.path.sep.join([BASE_PATH, "Annotations"])
 
 # define the path to the base output directory
 BASE_OUTPUT = "../Model_Output"
@@ -20,5 +19,5 @@ TEST_PATHS = os.path.sep.join([BASE_OUTPUT, "test_paths.txt"])
 # initialize our initial learning rate, number of epochs to train
 # for, and the batch size
 INIT_LR = 1e-5
-NUM_EPOCHS = 100
+NUM_EPOCHS = 30
 BATCH_SIZE = 16
