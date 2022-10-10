@@ -8,11 +8,6 @@ def create_dir(path):
 
 if __name__ == '__main__':
 
-    path ='data'
+    path ='Model_Output/plots'
     create_dir(path)
-    path ='Model_Output'
-    create_dir(path)
-    path ='scripts'
-    create_dir(path)
-    path ='notebooks'
-    create_dir(path)
+    

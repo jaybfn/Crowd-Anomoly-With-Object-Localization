@@ -18,6 +18,6 @@ TEST_PATHS = os.path.sep.join([BASE_OUTPUT, "test_paths.txt"])
 
 # initialize our initial learning rate, number of epochs to train
 # for, and the batch size
-INIT_LR = 1e-5
-NUM_EPOCHS = 30
+INIT_LR = 1e-4
+NUM_EPOCHS = 150
 BATCH_SIZE = 16
