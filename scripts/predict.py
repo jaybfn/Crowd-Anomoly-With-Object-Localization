@@ -39,7 +39,7 @@ lb = pickle.loads(open(config.LB_PATH, "rb").read())
 for imagePath in imagePaths:
 	# load the input image (in Keras format) from disk and preprocess
 	# it, scaling the pixel intensities to the range [0, 1]
-	image = load_img(imagePath, target_size=(224, 224))
+	image = load_img(imagePath, target_size=(128, 128))
 	image = img_to_array(image) / 255.0
 	image = np.expand_dims(image, axis=0)
 	# predict the bounding box of the object along with the class
