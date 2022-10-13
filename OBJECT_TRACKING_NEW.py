@@ -41,86 +41,92 @@ vid_fps = int(vid.get(cv2.CAP_PROP_FPS))
 vid_width, vid_height = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH)), int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
 out = cv2.VideoWriter('/data/videos/results.avi', codec, vid_fps, (vid_width, vid_height)) #Output new video
 
-while True:
-
-    _, img = vid.read()
-    if img is None:
-        print("Completed")
-        break
+def main():
     
-    img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    # Adding dimension
-    img_in = tf.expand_dims(img_in, 0)
-    # Reshaping imgase
-    img_in = transform_images(img_in, 416)
-    
-    t1 = time.time()
+    while True:
 
-    # boxes, 3D shape (1, 100, 4)
-    # scores, 2D shape (1, 100)
-    # classed, 2D shape (1, 100)
-    # nums, 1D shape (1,)
+        _, img = vid.read()
+        if img is None:
+            print("Completed")
+            break
+        
+        img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # Adding dimension
+        img_in = tf.expand_dims(img_in, 0)
+        # Reshaping imgase
+        img_in = transform_images(img_in, 416)
+        
+        t1 = time.time()
 
-    boxes, scores, classes, nums = yolo.predict(img_in)
+        # boxes, 3D shape (1, 100, 4)
+        # scores, 2D shape (1, 100)
+        # classed, 2D shape (1, 100)
+        # nums, 1D shape (1,)
 
-    classes = classes[0]
-    names = []
-    for i in range(len(classes)):
-        names.append(class_names[int(classes[i])])
-    
-    names = np.array(names)
-    converted_boxes = convert_boxes(img, boxes[0])
-    features = encoder(img, converted_boxes)
+        boxes, scores, classes, nums = yolo.predict(img_in)
 
-    #Add coment
-    detections = [Detection(bbox, score, class_name, feature) for bbox, score, class_name, feature in 
-                 zip(converted_boxes, scores[0], names, features)]
+        classes = classes[0]
+        names = []
+        for i in range(len(classes)):
+            names.append(class_names[int(classes[i])])
+        
+        names = np.array(names)
+        converted_boxes = convert_boxes(img, boxes[0])
+        features = encoder(img, converted_boxes)
 
-    boxes = np.array([d.tlwh for d in detections])
-    scores = np.array([d.confidence for d in detections])
-    classes = np.array([d.class_name for d in detections])
-    indices = preprocessing.non_max_suppression(boxes, classes, nms_max_overlap, scores)
-    detections = [detections[i] for i in indices]
+        #Add coment
+        detections = [Detection(bbox, score, class_name, feature) for bbox, score, class_name, feature in 
+                    zip(converted_boxes, scores[0], names, features)]
 
-    tracker.predict()
-    tracker.update(detections)
+        boxes = np.array([d.tlwh for d in detections])
+        scores = np.array([d.confidence for d in detections])
+        classes = np.array([d.class_name for d in detections])
+        indices = preprocessing.non_max_suppression(boxes, classes, nms_max_overlap, scores)
+        detections = [detections[i] for i in indices]
 
-
-    #Vizualization of results
-    cmap = plt.get_cmap('tab20b')
-    colors = [cmap(i)[:3] for i in np.linspace(0,1,20)]
-
-    for track in tracker.tracks:
-        # If there is no updates in trakc skip track
-        if not track.is_confirmed() or track.time_since_update > 1:
-            continue
-
-        bbox = track.to_tlbr()
-        class_name = track.get_class()
-        color = colors[int(track.track_id) % len(colors)]
-        color = [i * 255 for i in color] # To return to RGB scale
+        tracker.predict()
+        tracker.update(detections)
 
 
-        cv2.rectangle(img, (int(bbox[0]),int(bbox[1])), (int(bbox[2]),int(bbox[3])), color, 2)
-        cv2.rectangle(img, (int(bbox[0]), int(bbox[1]-30)), (int(bbox[0])+(len(class_name)
-                    +len(str(track.track_id)))*17, int(bbox[1])), color, -1)
-        cv2.putText(img, class_name+"-"+str(track.track_id), (int(bbox[0]), int(bbox[1]-10)), 0, 0.75,
-                    (255, 255, 255), 2)
-                    
+        #Vizualization of results
+        cmap = plt.get_cmap('tab20b')
+        colors = [cmap(i)[:3] for i in np.linspace(0,1,20)]
 
-    fps = 1./(time.time() - t1)
-    cv2.putText(img, "FPS: {:.2f}".format(fps), (0,30), 0, 1, (0,0,255), 2)
-    #cv2.resizeWindow('output', 1024, 768)
-    cv2.imshow('output', img)
+        for track in tracker.tracks:
+            # If there is no updates in trakc skip track
+            if not track.is_confirmed() or track.time_since_update > 1:
+                continue
 
-    out.write(img)
+            bbox = track.to_tlbr()
+            class_name = track.get_class()
+            color = colors[int(track.track_id) % len(colors)]
+            color = [i * 255 for i in color] # To return to RGB scale
 
-    if cv2.waitKey(1) == ord('q'):
-        break
 
-vid.release()
-out.release()
-cv2.destroyAllWindows()
+            cv2.rectangle(img, (int(bbox[0]),int(bbox[1])), (int(bbox[2]),int(bbox[3])), color, 2)
+            cv2.rectangle(img, (int(bbox[0]), int(bbox[1]-30)), (int(bbox[0])+(len(class_name)
+                        +len(str(track.track_id)))*17, int(bbox[1])), color, -1)
+            cv2.putText(img, class_name+"-"+str(track.track_id), (int(bbox[0]), int(bbox[1]-10)), 0, 0.75,
+                        (255, 255, 255), 2)
+                        
+
+        fps = 1./(time.time() - t1)
+        cv2.putText(img, "FPS: {:.2f}".format(fps), (0,30), 0, 1, (0,0,255), 2)
+        #cv2.resizeWindow('output', 1024, 768)
+        cv2.imshow('output', img)
+
+        out.write(img)
+
+        if cv2.waitKey(1) == ord('q'):
+            break
+
+    vid.release()
+    out.release()
+    cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+    main()
 
 
         
