@@ -11,52 +11,57 @@ cap = cv2.VideoCapture('./data/video/01.avi')
 font = cv2.FONT_HERSHEY_PLAIN
 colors = np.random.uniform(0, 255, size=(100, 3))
 
-while True:
-    _, img = cap.read()
-    height, width, _ = img.shape
+def main():
 
-    blob = cv2.dnn.blobFromImage(img, 1/255, (416, 416), (0,0,0), swapRB=True, crop=False)
-    net.setInput(blob)
-    output_layers_names = net.getUnconnectedOutLayersNames()
-    layerOutputs = net.forward(output_layers_names)
+    while True:
+        _, img = cap.read()
+        height, width, _ = img.shape
 
-    boxes = []
-    confidences = []
-    class_ids = []
+        blob = cv2.dnn.blobFromImage(img, 1/255, (416, 416), (0,0,0), swapRB=True, crop=False)
+        net.setInput(blob)
+        output_layers_names = net.getUnconnectedOutLayersNames()
+        layerOutputs = net.forward(output_layers_names)
 
-    for output in layerOutputs:
-        for detection in output:
-            scores = detection[5:]
-            class_id = np.argmax(scores)
-            confidence = scores[class_id]
-            if confidence > 0.2:
-                center_x = int(detection[0]*width)
-                center_y = int(detection[1]*height)
-                w = int(detection[2]*width)
-                h = int(detection[3]*height)
+        boxes = []
+        confidences = []
+        class_ids = []
 
-                x = int(center_x - w/2)
-                y = int(center_y - h/2)
+        for output in layerOutputs:
+            for detection in output:
+                scores = detection[5:]
+                class_id = np.argmax(scores)
+                confidence = scores[class_id]
+                if confidence > 0.5:
+                    center_x = int(detection[0]*width)
+                    center_y = int(detection[1]*height)
+                    w = int(detection[2]*width)
+                    h = int(detection[3]*height)
 
-                boxes.append([x, y, w, h])
-                confidences.append((float(confidence)))
-                class_ids.append(class_id)
+                    x = int(center_x - w/2)
+                    y = int(center_y - h/2)
 
-    indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.2, 0.4)
+                    boxes.append([x, y, w, h])
+                    confidences.append((float(confidence)))
+                    class_ids.append(class_id)
 
-    if len(indexes)>0:
-        for i in indexes.flatten():
-            x, y, w, h = boxes[i]
-            label = str(classes[class_ids[i]])
-            confidence = str(round(confidences[i],2))
-            color = colors[i]
-            cv2.rectangle(img, (x,y), (x+w, y+h), color, 2)
-            cv2.putText(img, label + " " + confidence, (x, y+20), font, 2, (255,255,255), 2)
+        indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
 
-    cv2.imshow('Image', img)
-    key = cv2.waitKey(1)
-    if key==27:
-        break
+        if len(indexes)>0:
+            for i in indexes.flatten():
+                x, y, w, h = boxes[i]
+                label = str(classes[class_ids[i]])
+                confidence = str(round(confidences[i],2))
+                color = colors[i]
+                cv2.rectangle(img, (x,y), (x+w, y+h), color, 2)
+                cv2.putText(img, label + " " + confidence, (x, y+20), font, 2, (255,255,255), 2)
 
-cap.release()
-cv2.destroyAllWindows()
+        cv2.imshow('Image', img)
+        key = cv2.waitKey(1)
+        if key==27:
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    main()
